@@ -103,6 +103,7 @@ const userSchema = new mongoose.Schema<IUser>(
     confirmEmail: Boolean,
     deletedAt: Date,
     image: String,
+    covers: [String],
     DOB: Date,
   },
   {

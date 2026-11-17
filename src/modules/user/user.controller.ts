@@ -23,10 +23,10 @@ import {
   fileTypes,
   processFiles,
   type IUser,
+  type IFile,
 } from "../../common/index.js";
 import { Types } from "mongoose";
 import type { HUser } from "../../database/index.js";
-import { log } from "console";
 
 export const userRoter = Router({
   strict: true,
@@ -55,7 +55,11 @@ userRoter.get(
   validator(suggestUsersSchema),
   respopnseFormatter(async (req: Request) => {
     const { page, limit } = req.validate.query;
-    const data = await userService.suggestUsers({ user: req.user!, page, limit });
+    const data = await userService.suggestUsers({
+      user: req.user!,
+      page,
+      limit,
+    });
     return { msg: "User suggestions fetched", status: 200, data };
   }),
 );
@@ -176,7 +180,7 @@ userRoter.put(
   ),
 );
 
-userRoter.post(
+userRoter.patch(
   "/image",
   authMiddleware,
   multerLocal({
@@ -188,13 +192,54 @@ userRoter.post(
   }),
   respopnseFormatter(
     async (req: Request, res: Response, next: NextFunction) => {
-      const data = await userService.updloadImage({
+      const key: string = await userService.upadteImage({
         user: req.user!,
         file: req.file!,
       });
       return {
         msg: "Image uploaded",
-        data,
+        data: { key },
+      };
+    },
+  ),
+);
+
+userRoter.patch(
+  "/preSignedImage",
+  authMiddleware,
+  respopnseFormatter(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const key: string = await userService.preSignedupadteImage({
+        user: req.user!,
+        data: req.body,
+      });
+      return {
+        msg: "URL created",
+        data: { key },
+      };
+    },
+  ),
+);
+
+userRoter.patch(
+  "/coverImages",
+  authMiddleware,
+  multerLocal({
+    fileType: fileTypes.images!,
+    customPath: "profile",
+  }).array("images"),
+  processFiles({
+    fileType: fileTypes.images!,
+  }),
+  respopnseFormatter(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const keys: string[] = await userService.updloadCoverImages({
+        user: req.user!,
+        files: req.files! as IFile[],
+      });
+      return {
+        msg: "Image uploaded",
+        data: { keys },
       };
     },
   ),

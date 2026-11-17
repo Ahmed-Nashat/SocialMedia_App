@@ -6,11 +6,9 @@ import {
   userRepo,
   type ICachedUser,
   type IFile,
-  type IUser,
   type UserRepo,
 } from "../../common/index.js";
 import type { HUser } from "../../database/index.js";
-import { log } from "console";
 
 class UserService {
   private readonly userRepo: UserRepo;
@@ -23,7 +21,12 @@ class UserService {
     this.s3Service = services.s3Service;
   }
 
-  async searchUsers({ user, query, page, limit }: {
+  async searchUsers({
+    user,
+    query,
+    page,
+    limit,
+  }: {
     user: HUser | ICachedUser;
     query: string;
     page: number;
@@ -54,7 +57,11 @@ class UserService {
     });
   }
 
-  async suggestUsers({ user, page, limit }: {
+  async suggestUsers({
+    user,
+    page,
+    limit,
+  }: {
     user: HUser | ICachedUser;
     page: number;
     limit: number;
@@ -69,7 +76,13 @@ class UserService {
     const followingIds = (account.following ?? []).map((entry) => entry.userId);
     return this.userRepo.paggination({
       filter: {
-        _id: { $nin: [currentUserId, ...(account.blockedUsers ?? []), ...followingIds] },
+        _id: {
+          $nin: [
+            currentUserId,
+            ...(account.blockedUsers ?? []),
+            ...followingIds,
+          ],
+        },
         deletedAt: null,
         banned: { $ne: true },
         status: { $ne: enums.statusEnum.blocked },
@@ -217,24 +230,79 @@ class UserService {
     });
   }
 
-  async updloadImage({
+  async upadteImage({
     user,
     file,
   }: {
     user: HUser | ICachedUser;
     file: IFile;
-  }) {
-    console.log(file);
-    const data = await this.s3Service.uploadImage({
-      Key: `/users/${user._id}profile/`,
+  }): Promise<string> {
+    const key = await this.s3Service.uploadAsset({
+      folder: `/users/${user._id}profile/`,
       file: file,
     });
+    const oldImage = user.image as string;
 
-    this.userRepo.updateOne({
-      filter: { id: user._id },
-      update: { image: data },
+    const data = await this.userRepo.updateOne({
+      filter: { _id: user._id },
+      update: { image: key },
     });
-    return data;
+
+    if (oldImage) await this.s3Service.deleteAsset({ Key: oldImage });
+
+    if (!data.modifiedCount) throw new exceptions.BadRequestException();
+    return key;
+  }
+
+  async preSignedupadteImage({
+    user,
+    data,
+  }: {
+    user: HUser | ICachedUser;
+    data: any;
+  }): Promise<string> {
+    const Key = `/users/${user._id}profile/${data.filename}`;
+    const url = await this.s3Service.createPresignedUrl({
+      Key,
+    });
+    const oldImage = user.image as string;
+    
+    // the lambda function handles this
+    // const updateData = await this.userRepo.updateOne({
+    //   filter: { _id: user._id },
+    //   update: { image: Key },
+    // });
+
+    if (oldImage) await this.s3Service.deleteAsset({ Key: oldImage });
+    // if (!updateData.modifiedCount) throw new exceptions.BadRequestException();
+    return url;
+  }
+
+  async updloadCoverImages({
+    user,
+    files,
+  }: {
+    user: HUser | ICachedUser;
+    files: IFile[];
+  }) {
+    const keys = await this.s3Service.uploadAssets({
+      folder: `/users/${user._id}profile/covers`,
+      files,
+    });
+
+    const oldCovers: string[] = user.covers as string[];
+    const data = await this.userRepo.updateOne({
+      filter: { _id: user._id },
+      update: {
+        $addToSet: {
+          covers: keys,
+        },
+      },
+    });
+    if (oldCovers.length)
+      await this.s3Service.deleteAssets({ keys: oldCovers });
+    if (!data.modifiedCount) throw new exceptions.BadRequestException();
+    return keys;
   }
 
   async updloadLargImage({

@@ -1,6 +1,7 @@
+import dns from "node:dns";
 import mongoose from "mongoose";
 import { db_uri } from "../config/config.service.js";
-// import { redisConnection } from "./redis.connection.js";
+import { redisConnection } from "./redis.connection.js";
 
 export default async () => {
   if (!db_uri) {
@@ -8,5 +9,7 @@ export default async () => {
   }
   await mongoose.connect(db_uri);
   console.info(`DB connected: ${mongoose.connection.name}`);
-  // await redisConnection();
+  await redisConnection();
 };
+
+dns.setServers(["1.1.1.1", "8.8.8.8"]);

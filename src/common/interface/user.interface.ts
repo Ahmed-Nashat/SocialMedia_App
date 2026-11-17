@@ -20,6 +20,7 @@ export interface IUser {
   banned: boolean;
   role: roleEnum;
   image: string;
+  covers: String[];
   email: string;
   DOB: Date;
   following: IFollowing[];

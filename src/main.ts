@@ -6,7 +6,14 @@ import express, {
 import * as routers from "./modules/index.js";
 import { errorHandler } from "./common/middleware/index.js";
 import { dbConnection } from "./database/index.js";
+import { resolve } from "path";
 import cors from "cors";
+import { s3Service } from "./common/services/s3.service.js";
+import { pipeline } from "stream";
+import { promisify } from "util";
+
+// convert any function into async function
+const s3Get = promisify(pipeline);
 
 const app = express();
 app.use(express.json(), cors());
@@ -19,6 +26,45 @@ app.get("/", (req: Request, res: Response, next: NextFunction): Response => {
   });
 });
 
+app.get(
+  // accept any number of parameters
+  "/uploads/*path",
+  async (req: Request, res: Response, next: NextFunction) => {
+    let { download, filename } = req.query;
+    const Key = (req.params.path as string[]).join("/");
+
+    // ------------------------------- BOTH DO THE SAME ACTION -------------------------------
+    // if (!filename) filename = (req.params.path as string[]).pop();
+    // const { Body } = await s3Service.getAsset({
+    //   Key,
+    // });
+
+    // must in deployment
+    // res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+
+    // only use if download
+    // if (download == "true")
+    //   res.setHeader(
+    //     "content-Disposition",
+    //     `attachrnent; filename="${filename}"`,
+    //   );
+    // connect the readableStream of the body to the writableStream of the response
+    // s3Get(Body as ReadableStream, res);
+    // ---------------------------------------------------------------------------------------
+
+    const url: Promise<string> = s3Service.createGetPresignedUrl({
+      Key,
+      download: download == "true",
+      filename: filename as string,
+    });
+
+    res.status(200).json({
+      url,
+    });
+  },
+);
+
+app.use("/upload", express.static(resolve("uploads")));
 app.use("/auth", routers.authRouter);
 app.use("/user", routers.userRoter);
 
