@@ -38,7 +38,7 @@ export const sendMail = async ({
   attachments?: Attachment[];
 }) => {
   const info = await transporter.sendMail({
-    from: `Saraha Project <${configService.app_email}>`,
+    from: `SocialMedia <${configService.app_email}>`,
     ...recipients,
     // send mail to more than one
     // carbon copy

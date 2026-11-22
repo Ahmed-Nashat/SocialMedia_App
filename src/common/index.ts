@@ -7,7 +7,7 @@ export type {
   ICreateToken,
   ICachedUser,
   IFile,
-  IFollowing
+  IFollowing,
 } from "./interface/index.js";
 export {
   roleBasedAccessMiddleware,

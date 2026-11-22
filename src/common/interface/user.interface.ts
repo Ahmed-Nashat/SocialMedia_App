@@ -1,14 +1,13 @@
-import type { genderEnum, providerEnum, roleEnum } from "../enum/index.js";
 import { Types } from "mongoose";
 import type { enums, IFollowing } from "../index.js";
 
 export interface IUser {
   credintialsChangedAt: number;
   twoFactorEnabled: boolean;
-  provider: providerEnum;
+  provider: enums.providerEnum;
   confirmEmail: boolean;
   phoneNumber: string;
-  gender: genderEnum;
+  gender: enums.genderEnum;
   paranoid?: boolean;
   changedAt: number;
   updatedAt: number;
@@ -18,7 +17,7 @@ export interface IUser {
   password: string;
   deletedAt: Date;
   banned: boolean;
-  role: roleEnum;
+  role: enums.roleEnum;
   image: string;
   covers: String[];
   email: string;

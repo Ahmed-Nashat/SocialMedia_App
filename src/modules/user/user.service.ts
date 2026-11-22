@@ -12,12 +12,10 @@ import type { HUser } from "../../database/index.js";
 
 class UserService {
   private readonly userRepo: UserRepo;
-  private readonly cacheService: services.CacheService;
   private readonly s3Service: services.S3Serive;
 
   constructor() {
     this.userRepo = userRepo;
-    this.cacheService = services.cacheService;
     this.s3Service = services.s3Service;
   }
 

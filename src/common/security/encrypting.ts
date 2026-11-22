@@ -14,8 +14,8 @@ export const encrypting = (plainText: string): string => {
 };
 
 // ---------------------- DECRYPTING -------------------------
-export const decrypting = (cipherTex: string): string => {
-  let [iv, cipher] = cipherTex.split("::") as [
+export const decrypting = (cipherText: string): string => {
+  let [iv, cipher] = cipherText.split("::") as [
     string | Buffer<ArrayBuffer>,
     string,
   ];

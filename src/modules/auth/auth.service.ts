@@ -93,7 +93,6 @@ class AuthService {
   }: IRefreshTokenType): Promise<ICreateToken> {
     const authorization: string = refreshToken;
     const [prefix, token] = authorization.split(" ");
-    console.log({ token });
 
     if (!token) throw new exceptions.ServerException("Invalid token");
     const user = await tokenService.verifyToken({
