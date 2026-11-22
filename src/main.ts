@@ -14,13 +14,22 @@ import { promisify } from "util";
 
 // convert any function into async function
 const s3Get = promisify(pipeline);
-
 const app = express();
 app.use(express.json(), cors());
-
 await dbConnection();
 
+app.use("/upload", express.static(resolve("uploads")));
+app.use("/auth", routers.authRouter);
+app.use("/user", routers.userRoter);
+
 app.get("/", (req: Request, res: Response, next: NextFunction): Response => {
+  return res.status(200).json({
+    msg: "Server is health",
+  });
+});
+
+app.post("/", (req: Request, res: Response, next: NextFunction): Response => {
+  console.log(req.body);
   return res.status(200).json({
     msg: "Server is health",
   });
@@ -63,10 +72,6 @@ app.get(
     });
   },
 );
-
-app.use("/upload", express.static(resolve("uploads")));
-app.use("/auth", routers.authRouter);
-app.use("/user", routers.userRoter);
 
 app.use(errorHandler);
 app.listen(3000, () => {
