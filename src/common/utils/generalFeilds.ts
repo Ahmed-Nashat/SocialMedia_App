@@ -30,7 +30,8 @@ export const generalFeilds = {
         error: getErrorMessage(lang, "name.twoNames"),
       }),
   DOB: (lang: enums.languageEnum) => z.string(),
-  scores: (lang: enums.languageEnum) => z.array(z.number()).nonempty().optional(),
+  scores: (lang: enums.languageEnum) =>
+    z.array(z.number()).nonempty().optional(),
   gender: (lang: enums.languageEnum) =>
     z.enum(enums.genderEnum, {
       error: getErrorMessage(lang, "gender"),
@@ -78,6 +79,6 @@ export const generalFeilds = {
       path: z.string().optional(),
       destination: z.string().optional(),
       filename: z.string().optional(),
-      buffer: z.string().optional(),
+      buffer: z.any().optional(),
     }),
 };

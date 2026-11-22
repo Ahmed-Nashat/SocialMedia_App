@@ -33,6 +33,20 @@ export class CacheService {
     return await this.client.set(key, value, { ...(ttl ? { EX: ttl } : {}) });
   }
 
+  async sAdd({ key, value }: { key: string; value: string }): Promise<number> {
+    if (typeof value !== "string") value = JSON.stringify(value);
+    return await this.client.sAdd(key, value);
+  }
+
+  async sRem({ key, value }: { key: string; value: string }): Promise<number> {
+    if (typeof value !== "string") value = JSON.stringify(value);
+    return await this.client.sRem(key, value);
+  }
+
+  async sMem({ key }: { key: string }): Promise<string[]> {
+    return await this.client.sMembers(key);
+  }
+
   async get<T = string>({ key }: { key: string }): Promise<T | null> {
     const data: string | null = await this.client.get(key);
     let result;

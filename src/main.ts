@@ -11,6 +11,7 @@ import cors from "cors";
 import { s3Service } from "./common/services/s3.service.js";
 import { pipeline } from "stream";
 import { promisify } from "util";
+import { services } from "./common/index.js";
 
 // convert any function into async function
 const s3Get = promisify(pipeline);
@@ -21,6 +22,7 @@ await dbConnection();
 app.use("/upload", express.static(resolve("uploads")));
 app.use("/auth", routers.authRouter);
 app.use("/user", routers.userRoter);
+app.use("/post", routers.postRouter);
 
 app.get("/", (req: Request, res: Response, next: NextFunction): Response => {
   return res.status(200).json({
@@ -28,12 +30,41 @@ app.get("/", (req: Request, res: Response, next: NextFunction): Response => {
   });
 });
 
-app.post("/", (req: Request, res: Response, next: NextFunction): Response => {
-  console.log(req.body);
-  return res.status(200).json({
-    msg: "Server is health",
-  });
-});
+app.post(
+  "/",
+  async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response> => {
+    await services.notificationService.sendNotification({
+      token: req.body.token,
+      title: req.body.title,
+      body: req.body.data,
+    });
+    return res.status(200).json({
+      msg: "Notification sent",
+    });
+  },
+);
+
+app.post(
+  "/notifications",
+  async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<Response> => {
+    await services.notificationService.sendNotifications({
+      tokens: req.body.tokens,
+      title: req.body.title,
+      body: req.body.data,
+    });
+    return res.status(200).json({
+      msg: "Notification sent",
+    });
+  },
+);
 
 app.get(
   // accept any number of parameters

@@ -28,4 +28,5 @@ export interface IUser {
   pendingRequests: Types.ObjectId[];
   status: enums.statusEnum;
   accountPrivacy: enums.accountPrivacyEnum;
+  friends?: Types.ObjectId[];
 }

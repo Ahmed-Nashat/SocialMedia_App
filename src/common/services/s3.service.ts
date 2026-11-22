@@ -21,7 +21,7 @@ import {
 import { enums, type IFile } from "../index.js";
 import { readFileSync } from "node:fs";
 
-export class S3Serive {
+export class S3Service {
   private readonly client: S3Client;
   constructor() {
     this.client = new S3Client({
@@ -231,4 +231,4 @@ export class S3Serive {
   }
 }
 
-export const s3Service = new S3Serive();
+export const s3Service = new S3Service();

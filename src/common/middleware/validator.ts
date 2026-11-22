@@ -14,6 +14,8 @@ export const validator = (schema: validationSChema) => {
       params: req.params,
       query: req.query,
       headers: req.headers,
+      files: req.files,
+      file: req.file,
     });
 
     if (!success) {

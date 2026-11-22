@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import { max_retries, refresh_ex } from "../../config/config.service.js";
 import crypto from "crypto";
-import type { HydratedDocument, Types } from "mongoose";
+import type { HydratedDocument } from "mongoose";
+import { cacheService, type CacheService } from "../../common/services/cache.service.js";
 import {
   userRepo,
   exceptions,
@@ -14,30 +15,28 @@ import {
 } from "../../common/index.js";
 
 // ---------------------- FUNCTIONS TYPES --------------------
-type CreateAndSendOtpType = {
+interface CreateAndSendOtpType {
   user: HydratedDocument<IUser>;
   event: string;
-};
+}
 
-type BlockUserType = {
+interface BlockUserType {
   userId: string;
   userOtpKey?: string;
-};
+}
 
-type VerifyLoginType = {
-  user: HydratedDocument<IUser>;
-  issuer: string;
-};
-
-type CheckUserType = {
+interface CheckUserType {
   email?: string;
   id?: string;
   exists?: boolean;
-};
+}
 // -----------------------------------------------------------
 
-class AuthHelpers {
-  constructor() {}
+export class AuthHelpers {
+  private readonly cacheService: CacheService;
+  constructor() {
+    this.cacheService = cacheService;
+  }
 
   generateOtp = (): number => crypto.randomInt(100000, 1000000);
 
@@ -64,14 +63,14 @@ class AuthHelpers {
     const key = this.getUserLoginTriesKey(userId);
     let tries = 1;
 
-    if (await services.cacheService.exists({ key })) {
-      tries = await services.cacheService.incr({ key });
+    if (await this.cacheService.exists({ key })) {
+      tries = await this.cacheService.incr({ key });
     } else {
-      await services.cacheService.set({ key, value: 1, ttl: 15 * 60 });
+      await this.cacheService.set({ key, value: 1, ttl: 15 * 60 });
     }
 
     if (tries >= max_retries) {
-      await services.cacheService.del({ key: [key] });
+      await this.cacheService.del({ key: [key] });
       await userRepo.updateOne({
         filter: {
           _id: userId,
@@ -121,7 +120,7 @@ class AuthHelpers {
     const ttl = refresh_ex - iat;
 
     if (ttl > 0) {
-      await services.cacheService.set({
+      await this.cacheService.set({
         key: tokenService.getRevokeKey({ userId: data.sub, jti: data.jti }),
         value: 1,
         ttl,
@@ -132,10 +131,10 @@ class AuthHelpers {
   // ---------------------- WRONG OTP --------------------------
   async wrongOtpHandler(userId: string): Promise<void> {
     const key = this.getUserOtpTriesKey(userId.toString());
-    if (await services.cacheService.exists({ key })) {
-      await services.cacheService.incr({ key });
+    if (await this.cacheService.exists({ key })) {
+      await this.cacheService.incr({ key });
     } else {
-      await services.cacheService.set({ key, value: 1, ttl: 5 * 60 });
+      await this.cacheService.set({ key, value: 1, ttl: 5 * 60 });
     }
     throw new exceptions.BadRequestException("Wrong OTP");
   }
@@ -143,13 +142,13 @@ class AuthHelpers {
   // ---------------------- BLOCK USER -------------------------
   async blockUser({ userId, userOtpKey }: BlockUserType): Promise<void> {
     const triesKey = this.getUserOtpTriesKey(userId);
-    const userOtpRetries = await services.cacheService.get({
+    const userOtpRetries = await this.cacheService.get({
       key: triesKey,
     });
 
     if (userOtpRetries && Number(userOtpRetries) >= max_retries) {
       if (userOtpKey) {
-        await services.cacheService.del({ key: [userOtpKey] });
+        await this.cacheService.del({ key: [userOtpKey] });
       }
 
       await userRepo.updateOne({

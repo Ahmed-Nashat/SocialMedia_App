@@ -8,6 +8,7 @@ export type {
   ICachedUser,
   IFile,
   IFollowing,
+  IPost,
 } from "./interface/index.js";
 export {
   roleBasedAccessMiddleware,
@@ -20,9 +21,15 @@ export {
   multerMemory,
   processFiles,
 } from "./middleware/index.js";
-export { generalFeilds, tokenService } from "./utils/index.js";
+export { generalFeilds, tokenService,getPostFilter } from "./utils/index.js";
 export * as enums from "../common/enum/index.js";
-export { BaseRepo, userRepo, UserRepo } from "./repo/index.js";
+export {
+  userRepo,
+  postRepo,
+  type BaseRepo,
+  type UserRepo,
+  type PostRepo,
+} from "./repo/index.js";
 export * as services from "./services/index.js";
 export * as security from "./security/index.js";
 export { eventEmitter } from "./events/email.events.js";

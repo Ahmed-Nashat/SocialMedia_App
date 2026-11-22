@@ -58,6 +58,13 @@ enable.addEventListener("click", async () => {
           "You have a new message.";
         item.append(title, body);
         messages.prepend(item);
+        if (Notification.permission === "granted") {
+          registration.showNotification(title.textContent, {
+            body: body.textContent,
+          }).catch((error) => {
+            console.error("Unable to display notification:", error);
+          });
+        }
       });
       listening = true;
     }

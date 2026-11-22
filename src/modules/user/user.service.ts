@@ -12,7 +12,7 @@ import type { HUser } from "../../database/index.js";
 
 class UserService {
   private readonly userRepo: UserRepo;
-  private readonly s3Service: services.S3Serive;
+  private readonly s3Service: services.S3Service;
 
   constructor() {
     this.userRepo = userRepo;
@@ -264,7 +264,7 @@ class UserService {
       Key,
     });
     const oldImage = user.image as string;
-    
+
     // the lambda function handles this
     // const updateData = await this.userRepo.updateOne({
     //   filter: { _id: user._id },

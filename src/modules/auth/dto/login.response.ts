@@ -5,6 +5,7 @@ export interface IVerify2FAType {
   message: string;
   require2FA: boolean;
   userId: Types.ObjectId;
+
 }
 
 export interface ILoginWithGoogleReturnType {

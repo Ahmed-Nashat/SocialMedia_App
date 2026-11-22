@@ -49,3 +49,5 @@ coverage/
 *.lcov
 .nyc_output/
 
+# firbase secrets
+firebase.json

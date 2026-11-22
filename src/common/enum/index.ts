@@ -10,3 +10,4 @@ export { storageEnum } from "./storage.enum.js";
 export { statusEnum } from "./status.enum.js";
 export { followStatusEnum } from "./follow.status.enum.js";
 export { accountPrivacyEnum } from "./account.privacy.enum.js";
+export { availabliityEnum} from "./availability.enum.js";

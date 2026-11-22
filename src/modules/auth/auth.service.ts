@@ -13,10 +13,10 @@ import {
   services,
   tokenService,
   userRepo,
-  UserRepo,
+  type UserRepo,
   type ICreateToken,
 } from "../../common/index.js";
-import { authHelpers } from "./auth.helper.js";
+import { AuthHelpers, authHelpers } from "./auth.helper.js";
 import type {
   signUpDTO,
   signInDTO,
@@ -24,6 +24,10 @@ import type {
   ILoginWithGoogleReturnType,
 } from "./index.js";
 import type { HUser } from "../../database/index.js";
+import {
+  notificationService,
+  type NotificationService,
+} from "../../common/services/notification.service.js";
 
 // ---------------------- FUNCTIONS TYPES --------------------
 interface ILoginWithGoogleType {
@@ -44,6 +48,7 @@ interface ICreateUserType {
 interface ILoginType {
   userData: signInDTO;
   issuer: string;
+  FCMToken?: string;
 }
 
 interface ILogoutType {
@@ -79,11 +84,15 @@ class AuthService {
   private readonly userRepo: UserRepo;
   private readonly chacheService: services.CacheService;
   private readonly eventEmitter: EventEmitter;
+  private readonly authHelpers: AuthHelpers;
+  private readonly notificationService: NotificationService;
 
   constructor() {
     this.userRepo = userRepo;
     this.chacheService = services.cacheService;
     this.eventEmitter = eventEmitter;
+    this.authHelpers = authHelpers;
+    this.notificationService = notificationService;
   }
 
   // ---------------------- REFRESH TOKEN ----------------------
@@ -102,7 +111,7 @@ class AuthService {
     if (!user) throw new exceptions.NotFoundException("User not found");
 
     // revoke the old refresh token
-    await authHelpers.revokedToken(token);
+    await this.authHelpers.revokedToken(token);
     if (typeof user.id !== "string")
       throw new exceptions.ServerException("Invalid id type");
     if (!user._id) throw new exceptions.ServerException("Invalid id type");
@@ -126,7 +135,7 @@ class AuthService {
       imagePath = `/uploads${normalizedPath.split("/uploads")[1]}`;
     } else if (file?.fullPath) imagePath = file.fullPath.replace(/\\/g, "/");
 
-    await authHelpers.checkUser({ email, exists: false });
+    await this.authHelpers.checkUser({ email, exists: false });
 
     if (typeof userData?.phoneNumber !== "string")
       throw new exceptions.ServerException("Invalid phone number type");
@@ -141,7 +150,7 @@ class AuthService {
     });
     user.phoneNumber = userData.phoneNumber;
 
-    await authHelpers.createAndSendOtp({
+    await this.authHelpers.createAndSendOtp({
       user,
       event: enums.eventEnum.signup,
     });
@@ -150,13 +159,13 @@ class AuthService {
 
   // ---------------------- CONFIRM EMAIL ----------------------
   async confirmEmail({ email, otp }: IConfirmEmailtype): Promise<HUser | void> {
-    let user: HUser | null = await authHelpers.checkUser({
+    let user: HUser | null = await this.authHelpers.checkUser({
       email,
     });
     if (!user) throw new exceptions.NotFoundException("User not found");
 
-    const userOtpKey = authHelpers.getUserOTPKey(user?.id);
-    await authHelpers.blockUser({ userId: user?.id, userOtpKey });
+    const userOtpKey = this.authHelpers.getUserOTPKey(user?.id);
+    await this.authHelpers.blockUser({ userId: user?.id, userOtpKey });
 
     const redisOtp = await services.cacheService.get({ key: userOtpKey });
     user.phoneNumber = security.decrypting(user.phoneNumber);
@@ -171,7 +180,7 @@ class AuthService {
       if (!user) throw new exceptions.NotFoundException("User not found");
       await services.cacheService.del({ key: [userOtpKey] });
       return user;
-    } else return await authHelpers.wrongOtpHandler(user?.id);
+    } else return await this.authHelpers.wrongOtpHandler(user?.id);
   }
 
   // ---------------------- RESEND OTP -------------------------
@@ -181,8 +190,8 @@ class AuthService {
 
     switch (topic.toString()) {
       case enums.eventEnum.signup:
-        const sendKey = authHelpers.getUserSendKey(user?.id);
-        const otpKey = authHelpers.getUserOTPKey(user?.id);
+        const sendKey = this.authHelpers.getUserSendKey(user?.id);
+        const otpKey = this.authHelpers.getUserOTPKey(user?.id);
 
         if (await services.cacheService.exists({ key: otpKey }))
           throw new exceptions.TooManyRequestException(
@@ -208,7 +217,7 @@ class AuthService {
             ttl: 600,
           });
 
-        const otp = authHelpers.generateOtp();
+        const otp = this.authHelpers.generateOtp();
         await services.cacheService.set({
           key: otpKey,
           value: otp,
@@ -234,9 +243,10 @@ class AuthService {
   async login({
     userData,
     issuer,
+    FCMToken,
   }: ILoginType): Promise<IVerify2FAType | ICreateToken> {
     const { email, password } = userData;
-    const user = await authHelpers.checkUser({ email });
+    const user = await this.authHelpers.checkUser({ email });
     if (!user) throw new exceptions.NotFoundException("User not found");
 
     if (user?.banned)
@@ -250,21 +260,21 @@ class AuthService {
         cipherText: user?.password,
       });
     } catch (e: any) {
-      await authHelpers.handleFailedLogin(user?.id);
+      await this.authHelpers.handleFailedLogin(user?.id);
     }
 
     await services.cacheService.del({
-      key: [authHelpers.getUserLoginTriesKey(user?.id)],
+      key: [this.authHelpers.getUserLoginTriesKey(user?.id)],
     });
 
     if (user.twoFactorEnabled) {
-      await authHelpers.blockUser({
+      await this.authHelpers.blockUser({
         userId: user?.id,
-        userOtpKey: authHelpers.getUserOTPKey(user?.id),
+        userOtpKey: this.authHelpers.getUserOTPKey(user?.id),
       });
-      const otp = authHelpers.generateOtp();
+      const otp = this.authHelpers.generateOtp();
       await services.cacheService.set({
-        key: authHelpers.getUser2FAKey(user?.id),
+        key: this.authHelpers.getUser2FAKey(user?.id),
         value: otp,
         ttl: 300,
       });
@@ -279,20 +289,33 @@ class AuthService {
         userId: user?._id,
       };
     }
-    return await authHelpers.verifyLogin({ issuer, user });
+    await this.notificationService.sendNotificationToUser({
+      userId: user?.id.toString(),
+      title: "New login",
+      body: "New device has loged in to your account",
+    });
+    const tokens = await this.authHelpers.verifyLogin({ issuer, user });
+    if (FCMToken) {
+      await this.notificationService.addFCM({
+        userId: user?.id || user?._id.toString(),
+        FCMToken,
+      });
+      // await this.send
+    }
+    return tokens;
   }
 
   // ---------------------- VERIFY 2FA -------------------------
   async verify2FALogin({ userId, otp, issuer }: IVerify2FALogin) {
-    const user = await authHelpers.checkUser({
+    const user = await this.authHelpers.checkUser({
       id: userId,
     });
     if (!user) throw new exceptions.NotFoundException("User not found");
 
-    const key = authHelpers.getUser2FAKey(userId);
+    const key = this.authHelpers.getUser2FAKey(userId);
     const redisOtp = await services.cacheService.get({ key });
 
-    await authHelpers.blockUser({
+    await this.authHelpers.blockUser({
       userId,
       userOtpKey: key,
     });
@@ -300,12 +323,12 @@ class AuthService {
     if (!redisOtp)
       throw new exceptions.NotFoundException("OTP expired or not found");
     if (Number(redisOtp) != otp)
-      return await authHelpers.wrongOtpHandler(userId);
+      return await this.authHelpers.wrongOtpHandler(userId);
     else {
       await services.cacheService.del({
-        key: [key, authHelpers.getUserOtpTriesKey(userId)],
+        key: [key, this.authHelpers.getUserOtpTriesKey(userId)],
       });
-      return await authHelpers.verifyLogin({ issuer, user });
+      return await this.authHelpers.verifyLogin({ issuer, user });
     }
   }
 
@@ -396,19 +419,19 @@ class AuthService {
         }
         // remove cached user
         await services.cacheService.del({
-          key: [authHelpers.getUserKey(userId)],
+          key: [this.authHelpers.getUserKey(userId)],
         });
         break;
       default:
         // create one revoked token
-        await authHelpers.revokedToken(rawToken);
+        await this.authHelpers.revokedToken(rawToken);
         break;
     }
   }
 
   // ---------------------- FORGET PASSWORD --------------------
   async forgetPassword(email: string): Promise<void> {
-    const user = await authHelpers.checkUser({ email });
+    const user = await this.authHelpers.checkUser({ email });
     if (!user) throw new exceptions.NotFoundException("User not found");
     await user?.updateOne({
       $set: { credintialsChangedAt: Math.ceil(Date.now() / 1000) },
@@ -417,7 +440,10 @@ class AuthService {
       prefix: tokenService.getPrefixRevoke(user?._id),
     });
     arr.length && (await services.cacheService.del({ key: arr }));
-    await authHelpers.createAndSendOtp({ user, event: enums.eventEnum.forget });
+    await this.authHelpers.createAndSendOtp({
+      user,
+      event: enums.eventEnum.forget,
+    });
     return;
   }
 
@@ -427,12 +453,12 @@ class AuthService {
     newPassword,
     cPassword,
   }: IForgetPasswordType): Promise<string | void> {
-    const user = await authHelpers.checkUser({ email });
+    const user = await this.authHelpers.checkUser({ email });
     if (!user) throw new exceptions.NotFoundException("User not found");
     if (newPassword !== cPassword)
       throw new exceptions.BadRequestException("Password dont't match");
-    const userForgetKey = authHelpers.getUserOTPForgetKey(user?.id);
-    await authHelpers.blockUser({
+    const userForgetKey = this.authHelpers.getUserOTPForgetKey(user?.id);
+    await this.authHelpers.blockUser({
       userId: user?.id,
       userOtpKey: userForgetKey,
     });
@@ -451,7 +477,7 @@ class AuthService {
       });
       return "Password changed";
     } else {
-      return await authHelpers.wrongOtpHandler(user?.id);
+      return await this.authHelpers.wrongOtpHandler(user?.id);
     }
   }
 }

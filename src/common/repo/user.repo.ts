@@ -16,7 +16,7 @@ export class UserRepo extends BaseRepo<IUser> {
     filter?: QueryFilter<IUser>;
     projection?: ProjectionType<IUser> | null;
     options?: QueryOptions<IUser>;
-  }) {
+  }): Promise<IUser[]> {
     return await this.model.find(filter, projection, options).exec();
   }
 

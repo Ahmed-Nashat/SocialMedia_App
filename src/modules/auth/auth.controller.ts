@@ -79,6 +79,7 @@ authRouter.post(
       const token: IVerify2FAType | ICreateToken = await authService.login({
         userData: req.body,
         issuer,
+        FCMToken: req.body.FCMToken,
       });
       return {
         status: 200,
