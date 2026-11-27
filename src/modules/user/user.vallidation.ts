@@ -26,7 +26,7 @@ export const handlePendingRequestSchema = (lang: enums.languageEnum) =>
     }),
   });
 
-export const searchUsersSchema = (_lang: enums.languageEnum) =>
+export const searchUsersSchema = () =>
   z.object({
     query: z.strictObject({
       q: z.string().trim().min(1).max(100),
@@ -35,7 +35,7 @@ export const searchUsersSchema = (_lang: enums.languageEnum) =>
     }),
   });
 
-export const suggestUsersSchema = (_lang: enums.languageEnum) =>
+export const suggestUsersSchema = () =>
   z.object({
     query: z.strictObject({
       page: z.coerce.number().int().min(1).max(10000).default(1),
@@ -43,11 +43,18 @@ export const suggestUsersSchema = (_lang: enums.languageEnum) =>
     }),
   });
 
-export const userUpdateSchema = (lang: enums.languageEnum) =>
+export const userUpdateSchema = () =>
   z.object({
     body: z.strictObject({
       firstName: z.string().min(2).max(10).optional(),
       lastName: z.string().min(2).max(10).optional(),
       accountPrivacy: z.enum(enums.accountPrivacyEnum).optional(),
+    }),
+  });
+
+export const sendFriendRequestSchema = (lang: enums.languageEnum) =>
+  z.object({
+    params: z.strictObject({
+      recieverId: generalFeilds.id(lang),
     }),
   });

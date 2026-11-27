@@ -6,3 +6,4 @@ export type { ICreateToken, ICachedUser } from "./token.interface.js";
 export type { IFile } from "./multer.interface.js";
 export type { IFollowing } from "./following.interface.js";
 export type { IPost } from "./post.interface.js";
+export type { IFreindsRequest } from "./freindsRequest.interface.js";

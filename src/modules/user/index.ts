@@ -4,6 +4,7 @@ export {
   handlePendingRequestSchema,
   searchUsersSchema,
   suggestUsersSchema,
+  sendFriendRequestSchema,
   userUpdateSchema,
 } from "./user.vallidation.js";
 export { userService } from "./user.service.js";

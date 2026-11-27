@@ -1,22 +1,28 @@
 import { Types } from "mongoose";
 import {
   enums,
-  exceptions,
   services,
   userRepo,
+  exceptions,
+  freindsRequestRepo,
   type ICachedUser,
   type IFile,
   type UserRepo,
+  type FreindsRequestRepo,
+  type IFreindsRequest,
 } from "../../common/index.js";
 import type { HUser } from "../../database/index.js";
 
 class UserService {
   private readonly userRepo: UserRepo;
   private readonly s3Service: services.S3Service;
+  private readonly freindsRequestRepo: FreindsRequestRepo;
+  private exceptions = exceptions;
 
   constructor() {
     this.userRepo = userRepo;
     this.s3Service = services.s3Service;
+    this.freindsRequestRepo = freindsRequestRepo;
   }
 
   async searchUsers({
@@ -700,6 +706,54 @@ class UserService {
     return isBlocked.modifiedCount == 0
       ? "User not found in you block list"
       : "User unblocked";
+  }
+
+  async sendFriendrequest({
+    user,
+    receiverId,
+  }: {
+    user: HUser;
+    receiverId: string;
+  }): Promise<IFreindsRequest> {
+    if (user.id == receiverId)
+      throw new this.exceptions.BadRequestException(
+        "You can not send request to yourself",
+      );
+    const receiver: HUser | null = await this.userRepo.findById({
+      id: new Types.ObjectId(receiverId),
+    });
+    if (!receiver)
+      throw new this.exceptions.NotFoundException("User not found");
+    const exists = await this.freindsRequestRepo.findOne({
+      filter: {
+        $or: [
+          {
+            senderId: user._id,
+            receiverId,
+          },
+          {
+            senderId: receiverId,
+            receiverId: user._id,
+          },
+        ],
+      },
+    });
+    if (exists)
+      throw new this.exceptions.ConflictException(
+        "This request is already exists",
+      );
+    if (
+      user.friends?.includes(receiver._id) ||
+      receiver.friends?.includes(user._id)
+    )
+      throw new this.exceptions.ConflictException("You are already frineds");
+
+    return await this.freindsRequestRepo.create({
+      data: {
+        senderId: user._id,
+        reciverId: receiver._id,
+      },
+    });
   }
 }
 

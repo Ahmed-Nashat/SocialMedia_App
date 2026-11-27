@@ -9,6 +9,7 @@ export type {
   IFile,
   IFollowing,
   IPost,
+  IFreindsRequest,
 } from "./interface/index.js";
 export {
   roleBasedAccessMiddleware,
@@ -21,14 +22,16 @@ export {
   multerMemory,
   processFiles,
 } from "./middleware/index.js";
-export { generalFeilds, tokenService,getPostFilter } from "./utils/index.js";
+export { generalFeilds, tokenService, getPostFilter } from "./utils/index.js";
 export * as enums from "../common/enum/index.js";
 export {
   userRepo,
   postRepo,
+  freindsRequestRepo,
   type BaseRepo,
   type UserRepo,
   type PostRepo,
+  type FreindsRequestRepo,
 } from "./repo/index.js";
 export * as services from "./services/index.js";
 export * as security from "./security/index.js";

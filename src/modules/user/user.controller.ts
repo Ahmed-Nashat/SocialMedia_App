@@ -12,6 +12,7 @@ import {
   softDeleteSchema,
   userService,
   userUpdateSchema,
+  sendFriendRequestSchema,
 } from "./index.js";
 import {
   roleBasedAccessMiddleware,
@@ -22,7 +23,6 @@ import {
   multerLocal,
   fileTypes,
   processFiles,
-  type IUser,
   type IFile,
 } from "../../common/index.js";
 import { Types } from "mongoose";
@@ -364,5 +364,22 @@ userRoter.post(
       targetUserId: req.validate.params.userId,
     });
     return { msg: result, status: 200, data: null };
+  }),
+);
+
+userRoter.post(
+  "friendRequest/:receiverId",
+  authMiddleware,
+  validator(sendFriendRequestSchema),
+  respopnseFormatter(async (req: Request) => {
+    const result = await userService.sendFriendrequest({
+      user: req.user as HUser,
+      receiverId: req.validate.params,
+    });
+    return {
+      msg: "Friend request sent",
+      status: 200,
+      data: null,
+    };
   }),
 );
