@@ -77,6 +77,7 @@ export const generalFeilds = {
       mimetype: z.string(),
       size: z.number().optional(),
       path: z.string().optional(),
+      fullPath: z.string().optional(),
       destination: z.string().optional(),
       filename: z.string().optional(),
       buffer: z.any().optional(),

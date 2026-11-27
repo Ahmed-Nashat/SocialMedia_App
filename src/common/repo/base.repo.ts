@@ -204,6 +204,7 @@ export default class BaseRepo<TRawDocType> {
     return await this.model.findOneAndUpdate(filter, update, {
       ...options,
       returnDocument: "after",
+      ...(Array.isArray(update) ? { updatePipeline: true } : {}),
     });
   }
 

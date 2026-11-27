@@ -2,15 +2,16 @@ export class ApllicationException extends Error {
   constructor(
     public status: number,
     override message: string,
+    cause?: unknown,
   ) {
-    super();
+    super(message, { cause });
     this.name = this.constructor.name;
   }
 }
 
 export class BadRequestException extends ApllicationException {
   constructor(message: string = "Bad Reqeust", cause?: unknown) {
-    super(400, message);
+    super(400, message, cause);
   }
 }
 
