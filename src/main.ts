@@ -23,6 +23,7 @@ app.use("/upload", express.static(resolve("uploads")));
 app.use("/auth", routers.authRouter);
 app.use("/user", routers.userRoter);
 app.use("/post", routers.postRouter);
+app.use("/like", routers.likesRouter);
 
 app.get("/", (req: Request, res: Response, next: NextFunction): Response => {
   return res.status(200).json({

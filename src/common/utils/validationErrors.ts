@@ -3,7 +3,7 @@ import { enums } from "../index.js";
 const errorsMessages: Record<string, any> = {
   email: {
     ar: "البريد الالكتروني غير صحيح",
-    en: "invalid email format, please enter email like this example@gmail.com",
+    en: "invalid email format, please enter email likes this example@gmail.com",
   },
   longPassword: {
     ar: "الباسورد اطول من المتوقع",
@@ -28,7 +28,7 @@ const errorsMessages: Record<string, any> = {
     },
     twoNames: {
       ar: "الاسم الكامل غير صحيح",
-      en: "full name must have 2 names, like that ahmed nashaat",
+      en: "full name must have 2 names, likes that ahmed nashaat",
     },
   },
   gender: {
@@ -45,7 +45,7 @@ const errorsMessages: Record<string, any> = {
   },
   wrongPhoneNumber: {
     ar: "رقم الهاتف غير صحيح, يجب ان يكون رقم الهاتف مصري",
-    en: "invalid phone number, please enter egyptian phone number like this 01xxxxxxxxx",
+    en: "invalid phone number, please enter egyptian phone number likes this 01xxxxxxxxx",
   },
   invalidObjectId: {
     ar: "معرف مونجو غير صحيح",

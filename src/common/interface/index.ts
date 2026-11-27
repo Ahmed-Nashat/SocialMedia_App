@@ -7,3 +7,4 @@ export type { IFile } from "./multer.interface.js";
 export type { IFollowing } from "./following.interface.js";
 export type { IPost } from "./post.interface.js";
 export type { IFreindsRequest } from "./freindsRequest.interface.js";
+export type { ILikes } from "./likes.interface.js";

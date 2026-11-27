@@ -10,6 +10,7 @@ export type {
   IFollowing,
   IPost,
   IFreindsRequest,
+  ILikes,
 } from "./interface/index.js";
 export {
   roleBasedAccessMiddleware,
@@ -27,11 +28,13 @@ export * as enums from "../common/enum/index.js";
 export {
   userRepo,
   postRepo,
+  likesRepo,
   freindsRequestRepo,
   type BaseRepo,
   type UserRepo,
   type PostRepo,
   type FreindsRequestRepo,
+  type LikesRepo,
 } from "./repo/index.js";
 export * as services from "./services/index.js";
 export * as security from "./security/index.js";

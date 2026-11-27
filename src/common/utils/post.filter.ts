@@ -13,6 +13,7 @@ export const getPostFilter = (user: HUser) => {
       createdBy: { $in: [user._id, ...(user.friends! || [])] },
     },
     {
+      availability: enums.availabliityEnum.onlyMe,
       tags: {
         $in: [user._id],
       },

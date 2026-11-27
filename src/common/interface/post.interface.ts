@@ -5,7 +5,7 @@ import type { enums } from "../index.js";
 export interface IPost {
   content?: string;
   attachments?: string[];
-  folderId: string;
+  folderId?: string;
   tags?: Types.ObjectId[] | IUser[];
   availability?: enums.availabliityEnum;
   createdBy: Types.ObjectId | IUser;

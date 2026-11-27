@@ -10,7 +10,7 @@ import {
   type IPost,
   type IResponse,
 } from "../../common/index.js";
-import { createPopstSchema, updatePostSchema } from "./post.validation.js";
+import { createPopstSchema, updatePostSchema, deletePostSchema } from "./post.validation.js";
 import { postService } from "./post.service.js";
 import type { HUser } from "../../database/index.js";
 
@@ -18,6 +18,16 @@ export const postRouter = Router({
   strict: true,
   caseSensitive: true,
 });
+
+postRouter.delete(
+  "/delete/:postId",
+  authMiddleware,
+  validator(deletePostSchema),
+  respopnseFormatter(async (req: Request) => {
+    await postService.deletePost({ user: req.user as HUser, postId: req.validate.params.postId });
+    return { data: null, status: 200, msg: "Post deleted" };
+  }),
+);
 
 postRouter.post(
   "/posts",

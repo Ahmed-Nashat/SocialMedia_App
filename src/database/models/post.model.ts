@@ -1,5 +1,6 @@
 import mongoose, { Schema, Types, type HydratedDocument } from "mongoose";
 import { enums, type IPost } from "../../common/index.js";
+import { userModel } from "./user.model.js";
 
 const postSchema = new mongoose.Schema<IPost>(
   {
@@ -16,7 +17,7 @@ const postSchema = new mongoose.Schema<IPost>(
     },
     createdBy: {
       type: Types.ObjectId,
-      requierd: true,
+      ref: userModel.collection.name,
     },
     tags: [Types.ObjectId],
     deletedAt: Date,

@@ -230,6 +230,14 @@ export class PostService {
     return post;
   }
 
+  async deletePost({ user, postId }: { user: HUser; postId: string }): Promise<void> {
+    const post = await this.postRepo.findOneAndUpdate({
+      filter: { _id: new Types.ObjectId(postId), createdBy: user._id },
+      update: { $set: { deletedAt: new Date() } },
+    });
+    if (!post) throw new this.exceptions.NotFoundException("Post not found");
+  }
+
   async listPosts({
     user,
     page,
@@ -242,6 +250,7 @@ export class PostService {
     return await this.postRepo.paggination({
       filter: {
         $or: getPostFilter(user),
+        deletedAt: null,
       },
       page,
       limit,
