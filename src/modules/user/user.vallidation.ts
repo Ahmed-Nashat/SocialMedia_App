@@ -58,3 +58,28 @@ export const sendFriendRequestSchema = (lang: enums.languageEnum) =>
       recieverId: generalFeilds.id(lang),
     }),
   });
+
+export const getSendFriendRequestSchema = (lang: enums.languageEnum) =>
+  z.object({
+    params: z
+      .strictObject({
+        page: z.coerce.number().optional(),
+        limit: z.coerce.number().optional(),
+      })
+      .superRefine(({ page, limit }, ctx) => {
+        if (page! < 0) {
+          ctx.addIssue({
+            path: ["query", "page"],
+            message: "page must be positive number",
+            code: "custom",
+          });
+        }
+        if (limit! < 0) {
+          ctx.addIssue({
+            path: ["query", "limit"],
+            message: "limit must be positive number",
+            code: "custom",
+          });
+        }
+      }),
+  });

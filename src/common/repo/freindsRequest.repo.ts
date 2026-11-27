@@ -6,5 +6,16 @@ export class FreindsRequestRepo extends BaseRepo<IFreindsRequest> {
   constructor() {
     super(freindsRequestModel);
   }
+  async findMany({
+    filter = {},
+    projection = null,
+    options = {},
+  }: {
+    filter?: QueryFilter<IUser>;
+    projection?: ProjectionType<IUser> | null;
+    options?: QueryOptions<IUser>;
+  }): Promise<IUser[]> {
+    return await this.model.find(filter, projection, options).exec();
+  }
 }
 export const freindsRequestRepo = new FreindsRequestRepo();

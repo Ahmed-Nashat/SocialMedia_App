@@ -1,15 +1,18 @@
 import mongoose, { Types, type HydratedDocument } from "mongoose";
 import type { IFreindsRequest } from "../../common/index.js";
+import { userModel } from "./user.model.js";
 
 const freindsRequestSchema = new mongoose.Schema<IFreindsRequest>(
   {
     senderId: {
       type: Types.ObjectId,
       required: true,
+      ref: userModel.collection.name,
     },
     reciverId: {
       type: Types.ObjectId,
       required: true,
+      ref: userModel.collection.name,
     },
   },
   {

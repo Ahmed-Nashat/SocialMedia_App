@@ -13,6 +13,7 @@ import {
   userService,
   userUpdateSchema,
   sendFriendRequestSchema,
+  getSendFriendRequestSchema,
 } from "./index.js";
 import {
   roleBasedAccessMiddleware,
@@ -310,17 +311,35 @@ userRoter.post(
 userRoter.get(
   "/pendingRequest",
   authMiddleware,
-  respopnseFormatter(
-    async (req: Request, res: Response, next: NextFunction) => {
-      const result = await userService.getPendingRequest(req.user!);
-      return {
-        msg: "Pending requests fetched",
-        status: 200,
-        data: result,
-      };
-    },
-  ),
+  respopnseFormatter(async (req: Request) => {
+    const result = await userService.getPendingRequest(req.user!);
+    return {
+      msg: "Pending requests fetched",
+      status: 200,
+      data: result,
+    };
+  }),
 );
+
+// ----------------------------------------------------------
+userRoter.get(
+  "/getFriendRequest",
+  authMiddleware,
+  validator(getSendFriendRequestSchema),
+  respopnseFormatter(async (req: Request) => {
+    const result = await userService.getFriendRequest({
+      user: req.user! as HUser,
+      page: req.validate.query.page as string,
+      limit: req.validate.query.limit as string,
+    });
+    return {
+      msg: "Pending requests fetched",
+      status: 200,
+      data: result,
+    };
+  }),
+);
+// ----------------------------------------------------------
 
 userRoter.post(
   "/pendingRequest/:userId",

@@ -13,6 +13,17 @@ import {
 } from "../../common/index.js";
 import type { HUser } from "../../database/index.js";
 
+interface IGetFriendsRequestType {
+  meta: {
+    count: number;
+    totalPages: number;
+    currenPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+  data: IFreindsRequest[];
+}
+
 class UserService {
   private readonly userRepo: UserRepo;
   private readonly s3Service: services.S3Service;
@@ -754,6 +765,36 @@ class UserService {
         reciverId: receiver._id,
       },
     });
+  }
+
+  async getFriendRequest({
+    user,
+    limit,
+    page,
+  }: {
+    user: HUser;
+    limit: string;
+    page: string;
+  }): Promise<IGetFriendsRequestType> {
+    const { data, meta } = await this.freindsRequestRepo.paggination({
+      filter: {
+        recieverId: user._id,
+      },
+      limit: Number(limit),
+      page: Number(page),
+      options: {
+        populate: [
+          {
+            path: "senderId",
+            select: "firstName lastName email image",
+          },
+        ],
+      },
+    });
+    return {
+      meta,
+      data,
+    };
   }
 }
 
